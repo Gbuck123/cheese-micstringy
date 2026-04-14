@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://photobooth.app/schemas/template/v2",
+  "title": "PhotoBoothTemplate",
+  "description": "Photo booth template format v2 — shared between web editor and iPad renderer",
+  "type": "object",
+  "required": ["metadata", "canvas", "background", "elements", "fonts", "assetIds"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["schemaVersion", "id", "name", "createdAt", "updatedAt", "ownerId", "tags"],
+      "properties": {
+        "schemaVersion": { "type": "integer", "minimum": 1 },
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "thumbnailUrl": { "type": "string", "format": "uri" }
+      }
+    },
+    "canvas": {
+      "type": "object",
+      "required": ["preset", "width", "height", "dpi"],
+      "properties": {
+        "preset": { "type": "string", "enum": ["4x6", "2x6_strip", "1080x1080", "1080x1920", "custom"] },
+        "width": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "dpi": { "type": "integer", "minimum": 1, "maximum": 1200 }
+      }
+    },
+    "background": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["color", "gradient", "image"] },
+        "color": { "$ref": "#/$defs/hexColorAlpha" },
+        "gradient": { "$ref": "#/$defs/gradientFill" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "imageAssetId": { "type": "string" }
+      }
+    },
+    "elements": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/element" }
+    },
+    "fonts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fontReference" }
+    },
+    "assetIds": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "video": { "$ref": "#/$defs/videoConfig" },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "startTime", "duration", "elements", "background"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "startTime": { "type": "number", "minimum": 0 },
+          "duration": { "type": "number", "minimum": 0 },
+          "elements": { "type": "array", "items": { "$ref": "#/$defs/element" } },
+          "background": { "$ref": "#/properties/background" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "hexColorAlpha": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6,8}$"
+    },
+    "gradientFill": {
+      "type": "object",
+      "required": ["type", "stops"],
+      "properties": {
+        "type": { "type": "string", "enum": ["linear", "radial"] },
+        "angle": { "type": "number" },
+        "stops": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["offset", "color"],
+            "properties": {
+              "offset": { "type": "number", "minimum": 0, "maximum": 1 },
+              "color": { "$ref": "#/$defs/hexColorAlpha" }
+            }
+          }
+        }
+      }
+    },
+    "fontReference": {
+      "type": "object",
+      "required": ["family", "urls", "weight", "style"],
+      "properties": {
+        "family": { "type": "string" },
+        "googleFontId": { "type": "string" },
+        "customFontId": { "type": "string" },
+        "urls": {
+          "type": "object",
+          "properties": {
+            "woff2": { "type": "string", "format": "uri" },
+            "ttf": { "type": "string", "format": "uri" },
+            "otf": { "type": "string", "format": "uri" }
+          }
+        },
+        "weight": { "type": "integer", "minimum": 100, "maximum": 900 },
+        "style": { "type": "string", "enum": ["normal", "italic"] }
+      }
+    },
+    "shadow": {
+      "type": "object",
+      "required": ["color", "blur", "offsetX", "offsetY"],
+      "properties": {
+        "color": { "$ref": "#/$defs/hexColorAlpha" },
+        "blur": { "type": "number", "minimum": 0 },
+        "offsetX": { "type": "number" },
+        "offsetY": { "type": "number" }
+      }
+    },
+    "animationConfig": {
+      "type": "object",
+      "required": ["keyframes", "delay", "duration", "loop"],
+      "properties": {
+        "keyframes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["time", "properties", "easing"],
+            "properties": {
+              "time": { "type": "number", "minimum": 0 },
+              "properties": { "type": "object" },
+              "easing": { "type": "string", "enum": ["linear", "easeIn", "easeOut", "easeInOut", "spring"] }
+            }
+          }
+        },
+        "delay": { "type": "number", "minimum": 0 },
+        "duration": { "type": "number", "minimum": 0 },
+        "loop": { "type": "boolean" }
+      }
+    },
+    "baseElementProps": {
+      "type": "object",
+      "required": ["id", "type", "name", "x", "y", "width", "height", "rotation", "opacity", "zIndex", "locked", "visible", "blendMode"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "name": { "type": "string" },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 },
+        "rotation": { "type": "number" },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "zIndex": { "type": "integer" },
+        "locked": { "type": "boolean" },
+        "visible": { "type": "boolean" },
+        "blendMode": { "type": "string" },
+        "shadow": { "$ref": "#/$defs/shadow" },
+        "animation": { "$ref": "#/$defs/animationConfig" }
+      }
+    },
+    "element": {
+      "oneOf": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseElementProps" },
+            {
+              "type": "object",
+              "required": ["type", "content", "font", "fontSize", "fill", "textAlign", "lineHeight", "letterSpacing", "textDecoration", "textTransform"],
+              "properties": {
+                "type": { "const": "text" },
+                "content": { "type": "string" },
+                "font": { "$ref": "#/$defs/fontReference" },
+                "fontSize": { "type": "number", "minimum": 1 },
+                "fill": {},
+                "textAlign": { "type": "string", "enum": ["left", "center", "right"] },
+                "verticalAlign": { "type": "string", "enum": ["top", "middle", "bottom"] },
+                "lineHeight": { "type": "number", "minimum": 0 },
+                "letterSpacing": { "type": "number" },
+                "textDecoration": { "type": "string", "enum": ["none", "underline", "line-through"] },
+                "textTransform": { "type": "string", "enum": ["none", "uppercase", "lowercase", "capitalize"] }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseElementProps" },
+            {
+              "type": "object",
+              "required": ["type", "src", "assetId", "cornerRadius"],
+              "properties": {
+                "type": { "const": "image" },
+                "src": { "type": "string" },
+                "assetId": { "type": "string" },
+                "cornerRadius": { "type": "number", "minimum": 0 }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseElementProps" },
+            {
+              "type": "object",
+              "required": ["type", "shapeKind", "fill"],
+              "properties": {
+                "type": { "const": "shape" },
+                "shapeKind": { "type": "string", "enum": ["rectangle", "ellipse", "triangle", "line", "polygon", "star"] },
+                "fill": {}
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseElementProps" },
+            {
+              "type": "object",
+              "required": ["type", "label", "cornerRadius", "captureIndex", "fillMode"],
+              "properties": {
+                "type": { "const": "photo_zone" },
+                "label": { "type": "string" },
+                "cornerRadius": { "type": "number", "minimum": 0 },
+                "captureIndex": { "type": "integer", "minimum": 0 },
+                "fillMode": { "type": "string", "enum": ["cover", "contain"] },
+                "aspectRatio": { "type": "string" }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/baseElementProps" },
+            {
+              "type": "object",
+              "required": ["type", "childIds"],
+              "properties": {
+                "type": { "const": "group" },
+                "childIds": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "videoConfig": {
+      "type": "object",
+      "required": ["duration", "fps", "soundEffects", "transitions"],
+      "properties": {
+        "duration": { "type": "number", "minimum": 0 },
+        "fps": { "type": "integer", "minimum": 1, "maximum": 120 },
+        "audio": {
+          "type": "object",
+          "required": ["src", "assetId", "volume", "fadeInDuration", "fadeOutDuration", "loop"],
+          "properties": {
+            "src": { "type": "string" },
+            "assetId": { "type": "string" },
+            "volume": { "type": "number", "minimum": 0, "maximum": 1 },
+            "fadeInDuration": { "type": "number", "minimum": 0 },
+            "fadeOutDuration": { "type": "number", "minimum": 0 },
+            "loop": { "type": "boolean" }
+          }
+        },
+        "soundEffects": { "type": "array" },
+        "transitions": { "type": "array" }
+      }
+    }
+  }
+}
